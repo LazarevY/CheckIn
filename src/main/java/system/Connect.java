@@ -11,18 +11,18 @@ import java.util.Vector;
  * взаимодействовать с системой и отправлять запросы
  */
 public class Connect {
-    private Vector<User> checkEvents;
-    private Vector<User> swapBuffer;
+    private Vector<Long> checkEvents;
+    private Vector<Long> swapBuffer;
 
     public Connect(){
         checkEvents = new Vector<>();
     }
-    public void addCheck(User user){
-
+    public void addCheck(long userID){
+            checkEvents.add(userID);
     }
 
-    public Vector<User> getCheckEvents() {
-        Vector<User> t = swapBuffer;
+    public Vector<Long> getCheckEvents() {
+        Vector<Long> t = swapBuffer;
         swapBuffer = checkEvents;
         checkEvents = t;
         return swapBuffer;

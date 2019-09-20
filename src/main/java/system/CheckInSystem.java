@@ -48,6 +48,14 @@ public class CheckInSystem {
         return systemPriority;
     }
 
+    private void appCycle(){
+        while (true){
+            for (long id :
+                    connect.getCheckEvents()) {
+                checkIn(id);
+            }
+        }
+    }
 
 
     public void checkIn(long userID){

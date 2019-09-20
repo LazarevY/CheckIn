@@ -26,11 +26,11 @@ public class User {
     }
 
     public void checkIn(){
-        sourceConnect.addCheck(this);
+        sourceConnect.addCheck(userID);
     }
 
     public boolean havePriority(){
-        return userPriority == null || userPriority.size() == 0;
+        return userPriority != null && userPriority.size() != 0;
     }
 
     public PriorityList<ObjectType> getUserPriority() {

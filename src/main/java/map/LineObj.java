@@ -8,7 +8,6 @@ import java.util.Iterator;
 
 public class LineObj extends GeoObj{
     private ArrayList<PointObj> objs;
-    private GeoObj parent;
     public LineObj() {
         objs = null;
         parent = null;

@@ -8,6 +8,7 @@ import user.User;
 import user.UserData;
 
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
@@ -37,7 +38,7 @@ public class Main {
 
 
          long id1 = checkInSystem.registerUser(new UserData("Andrey", 19, Sex.MALE));
-         checkInSystem.setUserLocation(id1, new Point(80,60));
+         checkInSystem.setUserLocation(id1, new Point(60,60));
 
          ArrayList<PointObj> objs1 = new ArrayList<>(5);
          objs1.add(pointObj1);
@@ -47,7 +48,6 @@ public class Main {
 
          checkInSystem.checkIn(id1);
         System.out.println();
-
 
     }
 }

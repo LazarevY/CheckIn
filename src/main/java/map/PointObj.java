@@ -4,7 +4,6 @@ import geometry.Point;
 
 public class PointObj extends GeoObj {
     private Point location;
-    private GeoObj parent;
 
     public PointObj(Point location, GeoObj parent) {
         this.location = location;
