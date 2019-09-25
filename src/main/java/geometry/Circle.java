@@ -1,5 +1,11 @@
 package geometry;
+/**
+ * @author LAZAREV
+ */
 
+/**
+ * Класс, описывающий окружность как границу объекта
+ */
 public class Circle implements Shape {
     private Point center;
     private int radius;
@@ -37,6 +43,6 @@ public class Circle implements Shape {
 
     @Override
     public boolean contains(Point p, int radius) {
-        return Point.distanceSqr(p, center) < radius * radius;
+        return Point.distanceSqr(p, center) < (radius + this.radius) * (radius + this.radius);
     }
 }

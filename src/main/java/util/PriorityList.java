@@ -1,5 +1,7 @@
 package util;
 
+import map.ObjectType;
+
 import java.util.Collection;
 import java.util.Vector;
 
@@ -31,5 +33,13 @@ public class PriorityList<E> extends Vector<E> {
             addElement(e);
         else
             add(priority, e);
+    }
+
+    public void tailMerdge(PriorityList<E> other){
+        for (E c :
+                other) {
+            if (!contains(c))
+                addLast(c);
+        }
     }
 }

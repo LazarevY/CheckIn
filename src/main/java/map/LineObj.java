@@ -8,17 +8,16 @@ import java.util.Iterator;
 
 public class LineObj extends GeoObj{
     private ArrayList<PointObj> objs;
-    public LineObj() {
+    public LineObj(ObjectType type) {
+        super(null, type, 12);
         objs = null;
-        parent = null;
     }
 
-    public LineObj(String name, GeoObj parent) {
-        super(name);
-        this.parent = parent;
+    public LineObj(String name, GeoObj parent, ObjectType type) {
+        super(name,parent, type);
         objs = null;
     }
-    public void addObj(PointObj o){
+    public void addPoint(PointObj o){
         if (objs == null) {
             objs = new ArrayList<>();
         }
@@ -31,15 +30,6 @@ public class LineObj extends GeoObj{
 
     public void setObjs(ArrayList<PointObj> objs) {
         this.objs = objs;
-    }
-
-    public void setParent(GeoObj parent) {
-        this.parent = parent;
-    }
-
-    @Override
-    public String fullName() {
-        return parent != null?  parent.fullName()+", " + name : name;
     }
 
     @Override

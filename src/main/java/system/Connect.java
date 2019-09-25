@@ -25,6 +25,7 @@ public class Connect {
         Vector<Long> t = swapBuffer;
         swapBuffer = checkEvents;
         checkEvents = t;
+        checkEvents.clear();
         return swapBuffer;
     }
 }

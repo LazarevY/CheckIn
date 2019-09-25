@@ -23,6 +23,6 @@ public class Rectangle implements Shape {
 
     @Override
     public boolean contains(Point p, int radius) {
-        return false;
+        return Math.abs(p.getY() - y) < hHeigth + radius && Math.abs(p.getX() - x) < hWidth + radius;
     }
 }

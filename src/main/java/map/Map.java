@@ -4,7 +4,6 @@ import geometry.Point;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 
 public class Map {
     private int width, height;
@@ -16,6 +15,10 @@ public class Map {
         this.height = height;
         this.objMap = objMap;
         usersLocation = new HashMap<>();
+    }
+
+    public void addObj(GeoObj obj){
+        objMap.add(obj);
     }
 
     public int getWidth() {

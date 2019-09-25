@@ -5,15 +5,14 @@ import geometry.Point;
 public class PointObj extends GeoObj {
     private Point location;
 
-    public PointObj(Point location, GeoObj parent) {
+    public PointObj(Point location, GeoObj parent, ObjectType type) {
+        super(null, parent, type);
         this.location = location;
-        this.parent = parent;
     }
 
-    public PointObj(String name, Point location, GeoObj parent) {
-        super(name);
+    public PointObj(String name, Point location, GeoObj parent, ObjectType type) {
+        super(name, parent, type);
         this.location = location;
-        this.parent = parent;
     }
 
     public Point getLocation() {
@@ -25,8 +24,4 @@ public class PointObj extends GeoObj {
         return Point.distanceSqr(location, this.location) < radius * radius;
     }
 
-    @Override
-    public String fullName() {
-        return parent != null?  parent.fullName()+", " + name : name;
-    }
 }
