@@ -2,8 +2,11 @@ package system;
 
 
 import geometry.Point;
-import map.*;
 import map.Map;
+import map.objects.CompositeObj;
+import map.objects.GeoObj;
+import map.objects.LineObj;
+import map.objects.ObjectType;
 import user.User;
 import user.UserData;
 import util.Pair;
@@ -31,14 +34,19 @@ public class CheckInSystem {
         relationObjUsers = new HashMap<>();
         systemPriority.addLast(ObjectType.SC);
         systemPriority.addLast(ObjectType.MARKET);
+        systemPriority.addLast(ObjectType.CAFE);
+        systemPriority.addLast(ObjectType.PARK);
+        systemPriority.addLast(ObjectType.ALLEY);
         systemPriority.addLast(ObjectType.UNI);
         systemPriority.addLast(ObjectType.SCHOOL);
         systemPriority.addLast(ObjectType.PRIVATE);
         systemPriority.addLast(ObjectType.MONUMENT);
+        systemPriority.addLast(ObjectType.ALLEY);
     }
 
     public void setMap(Map map) {
         this.map = map;
+        addObjToBase(map.getNullObj());
     }
 
     public void setConnect(Connect connect) {
@@ -58,67 +66,80 @@ public class CheckInSystem {
         }
     }
 
-    public void checkIn(long userID) {
+    public GeoObj checkIn(long userID) {
         Point loc = map.getUserLocation(userID);
         User user = usersBase.get(userID);
 
         GeoObj old = relationUserObj.get(userID);
-        if (old != null)
-            if (old.contains(loc, radiusError)) {
-                System.out.printf("User %d in %s", userID, old.fullName());
-                return;
-            }
+        if (old != map.getNullObj() && old.contains(loc, radiusError))
+            return old;
 
         PriorityList<ObjectType> priorityList = new PriorityList<>(user.getUserPriority());
         priorityList.tailMerdge(systemPriority);
-        
-        GeoObj concurrentObj = null;
-        int c_pr = priorityList.size();
 
-        ArrayDeque<Pair<GeoObj, Integer>> objs_pair = new ArrayDeque<>();
-        for (GeoObj o : map.getObjects())
-            objs_pair.addLast(new Pair<>(o, priorityList.indexOf(o.getObjectType())));
-        while (!objs_pair.isEmpty()){
-            Pair<GeoObj, Integer> pair = objs_pair.pop();
-            GeoObj obj = pair.getFirst();
-            int pr = pair.getSecond();
-            if(pr == -1 || pr > c_pr || obj.unnamed() || !obj.contains(loc, radiusError)){
+        GeoObj concurrentObj = map.getNullObj();
+        GeoObj concurrentParent = map.getNullObj();
+        int concurrent_priority = priorityList.size();
+        int parent_priority = concurrent_priority;
 
-            }else if(pr < c_pr || getCountUserInObj(concurrentObj) <= getCountUserInObj(obj)){
-                concurrentObj = obj;
-                c_pr = pr;
+        ArrayList<GeoObj> objs = map.getActualCheckInObjects(loc, radiusError);
+//        for (GeoObj current : objs) {
+//            int priority = priorityList.indexOf(current.getObjectType());
+//            if (current.checkParent(concurrentObj) && priority > concurrent_priority)
+//                priority = concurrent_priority;
+//            if(priority == -1 || priority > concurrent_priority)
+//                continue;
+//            if(priority < concurrent_priority || getCountUserInObj(concurrentObj) < getCountUserInObj(current)){
+//                concurrentObj = current;
+//                concurrent_priority = priority;
+//            }
+//        }
+
+        for (GeoObj current : objs) {
+            int priority = priorityList.indexOf(current.getObjectType());
+            if (current.checkParent(concurrentObj)) {
+                parent_priority = concurrent_priority;
+                concurrent_priority = priority;
+                concurrentParent = concurrentObj;
+                concurrentObj = current;
+            } else if (current.checkParent(concurrentParent) && (priority < concurrent_priority
+            || priority == concurrent_priority && getCountUserInObj(current) > getCountUserInObj(concurrentObj))){
+                concurrent_priority = priority;
+                concurrentObj = current;
+            }else{
+                int max_priority = Math.min(concurrent_priority, parent_priority);
+                if(priority < max_priority || parent_priority == max_priority &&
+                        getCountUserInObj(current) > getCountUserInObj(concurrentObj)){
+                    concurrent_priority = priority;
+                    GeoObj newParent = current.getParent();
+                    parent_priority = current.hasParent() ? priorityList.indexOf(newParent.getObjectType()) : priority;
+                    concurrentObj = current;
+                    concurrentParent = newParent;
+                }
             }
-            if(obj instanceof CompositeObj)
-                for (GeoObj d :
-                        ((CompositeObj) obj).getChilds())
-                    objs_pair.addLast(new Pair<>(d, Math.min(pr, priorityList.indexOf(d.getObjectType()))));
-            else if(obj instanceof LineObj)
-                for (GeoObj d :
-                        ((LineObj) obj).getPoints())
-                    objs_pair.addLast(new Pair<>(d, Math.min(pr, priorityList.indexOf(d.getObjectType()))));
         }
-
-        if(concurrentObj == null)
-            System.out.println("Object didn't founded");
-        else
-            System.out.printf("User %d in %s", userID, concurrentObj.fullName());
+        rewriteRelationUserAndObj(userID, concurrentObj);
+        return concurrentObj;
     }
 
-    private void rewriteRelationUserAndObj(long userID, GeoObj newObj){
+    private void rewriteRelationUserAndObj(long userID, GeoObj newObj) {
         GeoObj old = relationUserObj.get(userID);
         relationObjUsers.get(old).remove(userID);
-
+        relationUserObj.put(userID, newObj);
+        relationObjUsers.get(newObj).add(userID);
     }
 
-    private int getCountUserInObj(GeoObj obj){
+    private int getCountUserInObj(GeoObj obj) {
         ArrayList l = relationObjUsers.get(obj);
-        return l == null? 0 : l.size();
+        return l == null ? 0 : l.size();
     }
 
     public long registerUser(UserData userData) {
         long id = GeneratorID.generateUserID();
         User nUs = new User(userData, connect, id);
         usersBase.put(id, nUs);
+        relationUserObj.put(id, map.getNullObj());
+        relationObjUsers.get(map.getNullObj()).add(id);
         return id;
     }
 
@@ -151,57 +172,13 @@ public class CheckInSystem {
     }
 
     private void addObjToBase(GeoObj obj) {
+        if (relationObjUsers.containsKey(obj))
+            return;
         relationObjUsers.put(obj, new ArrayList<>());
-        if (obj instanceof CompositeObj) {
-            for (GeoObj o :
-                    ((CompositeObj) obj).getChilds()) {
-                addObjToBase(o);
-            }
-        } else if (obj instanceof LineObj) {
-            for (GeoObj o :
-                    ((LineObj) obj).getPoints()) {
-                addObjToBase(o);
-            }
-        }
+        ArrayList<GeoObj> child = (ArrayList<GeoObj>) obj.getActualChildren();
+        if (child != null)
+            for (GeoObj ch : child)
+                addObjToBase(ch);
     }
 
-
-    private GeoObj getChild(CompositeObj parent, Point loc, int radius) {
-        for (GeoObj o :
-                parent.getChilds()) {
-            if (o.contains(loc, radius)) {
-                if (o instanceof LineObj) {
-                    return ((LineObj) o).intersectObj(loc, radius);
-                } else if (o instanceof CompositeObj)
-                    return getChild((CompositeObj) o, loc, radius);
-                else return o;
-            }
-        }
-        return parent;
-    }
-
-    private ArrayList<GeoObj> getChildrenList(final CompositeObj parent, final Point loc, int radius) {
-        ArrayDeque<GeoObj> queue = new ArrayDeque<>(parent.getChilds());
-        ArrayList<GeoObj> result = new ArrayList<>();
-        result.add(parent);
-        //GeoObj m = parent;
-        while (!queue.isEmpty()) {
-            GeoObj o = queue.pop();
-            if (o instanceof LineObj) {
-                o = ((LineObj) o).intersectObj(loc, radius);
-                if (o != null && !o.unnamed())
-                    result.add(o);
-            } else if (o instanceof CompositeObj && o.contains(loc, radius)) {
-                queue.addAll(((CompositeObj) o).getChilds());
-                result.add(o);
-                //m = o;
-            } else {
-                if (!o.unnamed() && o.contains(loc, radius))
-                    result.add(o);
-            }
-        }
-//        if(result.isEmpty() && !m.unnamed())
-//            result.add(m);
-        return result;
-    }
 }

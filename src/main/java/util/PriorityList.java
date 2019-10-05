@@ -1,7 +1,5 @@
 package util;
 
-import map.ObjectType;
-
 import java.util.Collection;
 import java.util.Vector;
 

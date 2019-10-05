@@ -1,7 +1,7 @@
 package user;
 
 import system.Connect;
-import map.ObjectType;
+import map.objects.ObjectType;
 import util.PriorityList;
 
 public class User {

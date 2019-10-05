@@ -1,5 +1,7 @@
 package geometry;
 
+import java.util.ArrayList;
+
 /**
  * @author LAZAREV
  */
@@ -14,4 +16,5 @@ public interface Shape {
      * @return истина - если объект находится в пределах проверяемых границ, иначе ложь
      */
     boolean contains(Point location, int radius);
+    ArrayList<Point> getBoundsPoints();
 }

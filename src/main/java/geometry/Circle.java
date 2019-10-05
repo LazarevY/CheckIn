@@ -3,6 +3,8 @@ package geometry;
  * @author LAZAREV
  */
 
+import java.util.ArrayList;
+
 /**
  * Класс, описывающий окружность как границу объекта
  */
@@ -44,5 +46,15 @@ public class Circle implements Shape {
     @Override
     public boolean contains(Point p, int radius) {
         return Point.distanceSqr(p, center) < (radius + this.radius) * (radius + this.radius);
+    }
+
+    @Override
+    public ArrayList<Point> getBoundsPoints() {
+        ArrayList<Point> res = new ArrayList<>();
+        res.add(new Point(center.getX() + radius, center.getY()));
+        res.add(new Point(center.getX(), center.getY() + radius));
+        res.add(new Point(center.getX() - radius, center.getY()));
+        res.add(new Point(center.getX(), center.getY() - radius));
+        return res;
     }
 }
