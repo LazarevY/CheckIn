@@ -2,6 +2,8 @@ package map.objects;
 
 import geometry.Point;
 import geometry.Shape;
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
 
@@ -9,8 +11,8 @@ import java.util.ArrayList;
  * Класс компизитного объекта. Имеет дочерние объекты и произовильные границы<b></b>
  * описываемые классом <code>geometry.Shape</code>
  */
-public class CompositeObj extends GeoObj {
-    private ArrayList<GeoObj> childs;
+public class CompositeObj extends GeoObj implements IHaveChildren {
+    private ArrayList<GeoObj> children;
     private Shape bounds;
 
     public CompositeObj(Shape bounds, ObjectType type){
@@ -20,25 +22,20 @@ public class CompositeObj extends GeoObj {
         this(name, null, bounds, parent, type);
     }
 
-    public CompositeObj(String name, Shape bounds, ObjectType type) {
+    @JsonCreator
+    public CompositeObj(@JsonProperty("name")String name, @JsonProperty("bounds")Shape bounds,
+                        @JsonProperty("objectType")ObjectType type) {
         this(name, null, bounds, null, type);
     }
 
-    public CompositeObj(String name, ArrayList<GeoObj> childs, Shape bounds, GeoObj parent, ObjectType type) {
+    public CompositeObj(String name, ArrayList<GeoObj> children, Shape bounds, GeoObj parent, ObjectType type) {
         super(name, parent, type);
         this.bounds = bounds;
-        this.childs = childs;
+        this.children = children;
     }
 
-    public void addDaughterObj(GeoObj o){
-        if (childs == null)
-            childs = new ArrayList<>();
-        childs.add(o);
-        o.setParent(this);
-    }
-
-    public ArrayList<GeoObj> getChilds() {
-        return childs;
+    public ArrayList<GeoObj> getChildren() {
+        return children;
     }
 
     public Shape getBounds() {
@@ -60,11 +57,19 @@ public class CompositeObj extends GeoObj {
     public ArrayList<GeoObj> getActualChildren() {
         ArrayList<GeoObj> result = new ArrayList<>();
         for (GeoObj o :
-                childs) {
+                children) {
             if (!o.unnamed())
                 result.add(o);
             result.addAll(o.getActualChildren());
         }
         return result;
+    }
+
+    @Override
+    public void addChild(GeoObj child) {
+        if (children == null)
+            children = new ArrayList<>();
+        children.add(child);
+        child.setParent(this);
     }
 }

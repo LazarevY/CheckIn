@@ -1,6 +1,7 @@
 package map.objects;
 
 import geometry.Point;
+import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import static map.Map.emptyList;
@@ -20,7 +21,9 @@ public class PointObj extends GeoObj {
         super(name, parent, type);
         this.location = location;
     }
-    public PointObj(String name, Point location , ObjectType type) {
+    @JsonCreator
+    public PointObj(@JsonProperty("name") String name, @JsonProperty("location") Point location ,
+                    @JsonProperty("type")ObjectType type) {
         super(name, null, type);
         this.location = location;
     }

@@ -18,7 +18,7 @@ public class Map {
 
     private HashMap<Long, Point> usersLocation;
 
-    private static final GeoObj nullObj = new PointObj(null, null);
+    private static final GeoObj nullObj = new PointObj("Not founded object",null, null);
     public static final ArrayList<GeoObj> emptyList = new ArrayList<>(0);
 
     public Map(int widthTail, int heightTail, int countXTiles, int countYTiles) {

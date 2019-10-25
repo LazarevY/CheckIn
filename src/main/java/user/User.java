@@ -1,7 +1,10 @@
 package user;
 
+import geometry.Point;
 import system.Connect;
 import map.objects.ObjectType;
+import system.events.ChangeLocationEvent;
+import system.events.CheckInEvent;
 import util.PriorityList;
 
 public class User {
@@ -26,8 +29,12 @@ public class User {
     }
 
     public void checkIn(){
-        sourceConnect.addCheck(userID);
+        sourceConnect.addEvent(new CheckInEvent(userID));
     }
+
+    public void setLocation(Point location){
+        sourceConnect.addEvent(new ChangeLocationEvent(userID, location));
+    };
 
     public boolean havePriority(){
         return userPriority != null && userPriority.size() != 0;

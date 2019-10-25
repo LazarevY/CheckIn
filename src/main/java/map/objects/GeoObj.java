@@ -1,13 +1,24 @@
 package map.objects;
 
-
 import geometry.Point;
+import org.codehaus.jackson.annotate.JsonSubTypes;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
 
 import java.util.ArrayList;
 
 /**
  * Класс, описывающий основные свойства геообъекта.
  */
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = PointObj.class, name = "point"),
+        @JsonSubTypes.Type(value = CompositeObj.class, name = "composite"),
+        @JsonSubTypes.Type(value = UsualObj.class, name = "usual"),
+        @JsonSubTypes.Type(value = LineObj.class, name = "line"),
+})
 public abstract class GeoObj {
     protected String name;
     private GeoObj parent;

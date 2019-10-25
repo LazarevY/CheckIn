@@ -3,6 +3,10 @@ package geometry;
  * @author LAZAREV
  */
 
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonTypeName;
+
 import java.util.ArrayList;
 
 /**
@@ -12,7 +16,8 @@ public class Circle implements Shape {
     private Point center;
     private int radius;
 
-    public Circle(Point center, int radius) {
+    @JsonCreator
+    public Circle(@JsonProperty("center") Point center, @JsonProperty("radius") int radius) {
         this.center = center;
         this.radius = radius;
     }

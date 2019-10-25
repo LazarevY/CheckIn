@@ -1,12 +1,19 @@
 package geometry;
 
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonTypeName;
+
 import java.util.ArrayList;
 
 public class Rectangle implements Shape {
     private int x, y;
     private int halfWidth, halfHeight;
 
-    public Rectangle(int x, int y, int halfWidth, int halfHeight) {
+    @JsonCreator
+    public Rectangle(@JsonProperty("x") int x, @JsonProperty("y")int y,
+                     @JsonProperty("halfWidth")int halfWidth,
+                     @JsonProperty("halfHeight")int halfHeight) {
         this.x = x;
         this.y = y;
         this.halfWidth = halfWidth;

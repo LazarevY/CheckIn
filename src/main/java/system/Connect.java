@@ -1,8 +1,11 @@
 package system;
 
-import user.User;
+import system.events.SystemEvent;
+import util.PriorityList;
 
 
+import java.util.ArrayList;
+import java.util.PriorityQueue;
 import java.util.Vector;
 
 /**
@@ -11,21 +14,22 @@ import java.util.Vector;
  * взаимодействовать с системой и отправлять запросы
  */
 public class Connect {
-    private Vector<Long> checkEvents;
-    private Vector<Long> swapBuffer;
+    private PriorityQueue<SystemEvent> events;
+    private PriorityQueue<SystemEvent> swapBuffer;
 
     public Connect(){
-        checkEvents = new Vector<>();
+        events = new PriorityQueue<>(((o1, o2) -> Integer.compare(o1.getPriority(), o2.getPriority())));
+        swapBuffer = new PriorityQueue<>(events.comparator());
     }
-    public void addCheck(long userID){
-            checkEvents.add(userID);
+    public void addEvent(SystemEvent e){
+            events.add(e);
     }
 
-    public Vector<Long> getCheckEvents() {
-        Vector<Long> t = swapBuffer;
-        swapBuffer = checkEvents;
-        checkEvents = t;
-        checkEvents.clear();
+    public PriorityQueue<SystemEvent> getEvents() {
+        PriorityQueue<SystemEvent> t = swapBuffer;
+        swapBuffer = events;
+        events = t;
+        events.clear();
         return swapBuffer;
     }
 }

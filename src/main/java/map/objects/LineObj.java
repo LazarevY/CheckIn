@@ -1,13 +1,15 @@
 package map.objects;
 
 import geometry.Point;
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
 import util.SimpleMath;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 
-public class LineObj extends GeoObj{
+public class LineObj extends GeoObj implements IHaveChildren{
     private ArrayList<PointObj> objs;
     public LineObj(ObjectType type) {
         super(null, type, 12);
@@ -19,18 +21,12 @@ public class LineObj extends GeoObj{
         objs = null;
     }
 
-    public LineObj(String name, ObjectType type) {
+    @JsonCreator
+    public LineObj (@JsonProperty("name") String name,
+                    @JsonProperty("objectType") ObjectType type) {
         super(name,null, type);
         objs = null;
     }
-    public void addPoint(PointObj o){
-        if (objs == null) {
-            objs = new ArrayList<>();
-        }
-        objs.add(o);
-        o.setParent(this);
-    }
-
     public ArrayList<PointObj> getPoints(){
         return objs;
     }
@@ -114,5 +110,16 @@ public class LineObj extends GeoObj{
                 result.add(o);
 
         return result;
+    }
+
+    @Override
+    public void addChild(GeoObj child) {
+        if(!(child instanceof PointObj))
+            return;
+        if (objs == null) {
+            objs = new ArrayList<>();
+        }
+        objs.add(((PointObj) child));
+        child.setParent(this);
     }
 }

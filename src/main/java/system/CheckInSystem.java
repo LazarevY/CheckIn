@@ -3,18 +3,18 @@ package system;
 
 import geometry.Point;
 import map.Map;
-import map.objects.CompositeObj;
 import map.objects.GeoObj;
-import map.objects.LineObj;
 import map.objects.ObjectType;
+import system.events.ChangeLocationEvent;
+import system.events.CheckInEvent;
+import system.events.SystemEvent;
 import user.User;
 import user.UserData;
-import util.Pair;
 import util.PriorityList;
 
 import java.util.*;
 
-public class CheckInSystem {
+public class CheckInSystem implements Runnable {
 
     public static final int radiusError = 10;
 
@@ -24,9 +24,11 @@ public class CheckInSystem {
 
     private Map map;
 
-    private Connect connect;
+    private volatile Connect connect;
 
     private final static PriorityList<ObjectType> systemPriority = new PriorityList<>();
+
+    private boolean launched = false;
 
     public CheckInSystem() {
         usersBase = new HashMap<>();
@@ -46,7 +48,7 @@ public class CheckInSystem {
 
     public void setMap(Map map) {
         this.map = map;
-        addObjToBase(map.getNullObj());
+        addObjToBaseOnDeepMode(map.getNullObj());
     }
 
     public void setConnect(Connect connect) {
@@ -59,9 +61,16 @@ public class CheckInSystem {
 
     private void appCycle() {
         while (true) {
-            for (long id :
-                    connect.getCheckEvents()) {
-                checkIn(id);
+            //System.out.println("New app cycle");
+            for (SystemEvent event : connect.getEvents())
+                if (event.getClass() == CheckInEvent.class)
+                    manageEvent(((CheckInEvent) event));
+                else if (event.getClass() == ChangeLocationEvent.class)
+                    manageEvent(((ChangeLocationEvent) event));
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -83,18 +92,6 @@ public class CheckInSystem {
         int parent_priority = concurrent_priority;
 
         ArrayList<GeoObj> objs = map.getActualCheckInObjects(loc, radiusError);
-//        for (GeoObj current : objs) {
-//            int priority = priorityList.indexOf(current.getObjectType());
-//            if (current.checkParent(concurrentObj) && priority > concurrent_priority)
-//                priority = concurrent_priority;
-//            if(priority == -1 || priority > concurrent_priority)
-//                continue;
-//            if(priority < concurrent_priority || getCountUserInObj(concurrentObj) < getCountUserInObj(current)){
-//                concurrentObj = current;
-//                concurrent_priority = priority;
-//            }
-//        }
-
         for (GeoObj current : objs) {
             int priority = priorityList.indexOf(current.getObjectType());
             if (current.checkParent(concurrentObj)) {
@@ -103,13 +100,13 @@ public class CheckInSystem {
                 concurrentParent = concurrentObj;
                 concurrentObj = current;
             } else if (current.checkParent(concurrentParent) && (priority < concurrent_priority
-            || priority == concurrent_priority && getCountUserInObj(current) > getCountUserInObj(concurrentObj))){
+                    || priority == concurrent_priority && getCountUserInObj(current) > getCountUserInObj(concurrentObj))) {
                 concurrent_priority = priority;
                 concurrentObj = current;
-            }else{
+            } else {
                 int max_priority = Math.min(concurrent_priority, parent_priority);
-                if(priority < max_priority || parent_priority == max_priority &&
-                        getCountUserInObj(current) > getCountUserInObj(concurrentObj)){
+                if (priority < max_priority || parent_priority == max_priority &&
+                        getCountUserInObj(current) > getCountUserInObj(concurrentObj)) {
                     concurrent_priority = priority;
                     GeoObj newParent = current.getParent();
                     parent_priority = current.hasParent() ? priorityList.indexOf(newParent.getObjectType()) : priority;
@@ -143,6 +140,10 @@ public class CheckInSystem {
         return id;
     }
 
+    public User getUser(long id) {
+        return usersBase.get(id);
+    }
+
     public void unregisterUser(Long userID) {
         GeoObj linked = relationUserObj.get(userID);
         if (linked != null) {
@@ -156,6 +157,12 @@ public class CheckInSystem {
         map.addUserLocation(userID, location);
     }
 
+
+    public void registerAll(List<GeoObj> objs){
+        for (GeoObj object : objs)
+            registerGeoObj(object);
+    }
+
     public void addUserPriorityInOrder(long userID, ObjectType... priority) {
         User u = usersBase.get(userID);
         for (ObjectType t :
@@ -164,21 +171,64 @@ public class CheckInSystem {
         }
     }
 
-    public void registerGeoObj(GeoObj obj) {
+
+    /**
+     *
+     *Регистрация в глубоком режиме - кроме объекта будут зарегистрированы все его дочерние элементы
+     */
+    public void registerGeoObjOnDeepMode(GeoObj obj) {
+        if (obj.unnamed())
+            return;
+        map.addObj(obj);
+        addObjToBaseOnDeepMode(obj);
+    }
+
+    public void registerGeoObj(GeoObj obj){
         if (obj.unnamed())
             return;
         map.addObj(obj);
         addObjToBase(obj);
     }
 
-    private void addObjToBase(GeoObj obj) {
+    private void addObjToBaseOnDeepMode(GeoObj obj) {
         if (relationObjUsers.containsKey(obj))
             return;
         relationObjUsers.put(obj, new ArrayList<>());
         ArrayList<GeoObj> child = (ArrayList<GeoObj>) obj.getActualChildren();
         if (child != null)
             for (GeoObj ch : child)
-                addObjToBase(ch);
+                addObjToBaseOnDeepMode(ch);
     }
 
+    private void addObjToBase(GeoObj obj){
+        if (relationObjUsers.containsKey(obj))
+            return;
+        relationObjUsers.put(obj, new ArrayList<>());
+    }
+
+    private void manageEvent(CheckInEvent event) {
+        long id = event.getUserId();
+        User user = usersBase.get(id);
+        if (user == null)
+            System.out.printf("User with id = %d didn't founded\n", id);
+        else {
+            System.out.printf("User %s has been checkined in %s\n", user.getData().getName(),
+                    checkIn(id).fullName());
+        }
+    }
+
+    private void manageEvent(ChangeLocationEvent event) {
+        map.addUserLocation(event.getUserId(), event.getLocation());
+    }
+
+    public void startSystem() {
+        launched = true;
+    }
+
+    @Override
+    public void run() {
+        while (launched) {
+            appCycle();
+        }
+    }
 }
