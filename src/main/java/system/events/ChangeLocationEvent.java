@@ -1,17 +1,17 @@
 package system.events;
 
-import geometry.Point;
+import geometry.geojson.Point;
 
 public class ChangeLocationEvent implements SystemEvent {
-    private long userId;
+    private int userId;
     private Point location;
 
-    public ChangeLocationEvent(long userId, Point location) {
+    public ChangeLocationEvent(int userId, Point location) {
         this.userId = userId;
         this.location = location;
     }
 
-    public long getUserId() {
+    public int getUserId() {
         return userId;
     }
 
@@ -19,10 +19,4 @@ public class ChangeLocationEvent implements SystemEvent {
         return location;
     }
 
-    @Override
-    public int getPriority() {
-        return PRIORITY;
-    }
-
-    private static final int  PRIORITY = 1;
 }

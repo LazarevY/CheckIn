@@ -1,6 +1,6 @@
 package user;
 
-import geometry.Point;
+import geometry.geojson.Point;
 import system.Connect;
 import map.objects.ObjectType;
 import system.events.ChangeLocationEvent;
@@ -11,9 +11,9 @@ public class User {
     private UserData data;
     private Connect sourceConnect;
     private PriorityList<ObjectType> userPriority;
-    private Long userID;
+    private int userID;
 
-    public User(UserData data, Connect sourceConnect, long userID) {
+    public User(UserData data, Connect sourceConnect, int userID) {
         this.data = data;
         this.sourceConnect = sourceConnect;
         this.userID = userID;
@@ -29,11 +29,11 @@ public class User {
     }
 
     public void checkIn(){
-        sourceConnect.addEvent(new CheckInEvent(userID));
+        sourceConnect.sendEvent(new CheckInEvent(userID));
     }
 
     public void setLocation(Point location){
-        sourceConnect.addEvent(new ChangeLocationEvent(userID, location));
+        sourceConnect.sendEvent(new ChangeLocationEvent(userID, location));
     };
 
     public boolean havePriority(){
@@ -49,7 +49,7 @@ public class User {
     }
 
 
-    public Long getUserID() {
+    public int getUserID() {
         return userID;
     }
 

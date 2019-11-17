@@ -1,32 +1,24 @@
 package fileinteracting.reading;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fileinteracting.topology.GeoObjectsTopology;
 import fileinteracting.topology.TopologyType;
-import map.objects.CompositeObj;
+import geometry.geojson.Geometry;
 import map.objects.GeoObj;
 import map.objects.IHaveChildren;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GeoObjectsLoader {
-    private ObjectMapper objectMapper;
-    public GeoObjectsLoader() {
-        objectMapper = new ObjectMapper();
-        objectMapper.enableDefaultTyping();
-    }
-
-    public ArrayList<GeoObj> loadGeoObjects(String sourceObjectsFileName){
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    public static ArrayList<GeoObj> loadGeoObjects(String sourceObjectsFileName){
         GeoObj[] scalar;
         try {
             scalar =  objectMapper.readValue(new File(sourceObjectsFileName), GeoObj[].class);
@@ -37,57 +29,81 @@ public class GeoObjectsLoader {
         return new ArrayList<>(Arrays.asList(scalar));
     }
 
-    public  void setTopology(List<GeoObj> scalarList, String topologyFilePath){
-        List<String> topologyLines;
+    public static Map<Integer, GeoObj> loadGeoObjectsInMap(String sourceObjectsFileName){
+        GeoObj[] scalar;
         try {
-            topologyLines = Files.readAllLines(Paths.get(topologyFilePath));
+            scalar =  objectMapper.readValue(new File(sourceObjectsFileName), GeoObj[].class);
         } catch (IOException e) {
             e.printStackTrace();
-            return;
+            return null;
         }
+        Map<Integer, GeoObj> objMap = new HashMap<>();
 
-        for (String line : topologyLines){
-            GeoObjectsTopology topology = parseTopology(line);
-            if (topology == null)
-                return;
-            IHaveChildren parent = scalarList.get(topology.getParentIndex()) instanceof  IHaveChildren ?
-                    ((IHaveChildren) scalarList.get(topology.getParentIndex())) : null;
-            if (parent == null)
-                return;
+        for (GeoObj obj : scalar)
+            objMap.put(obj.getId(), obj);
 
-            for (int childIndex : topology.getDaughterIndices())
-                parent.addChild(scalarList.get(childIndex));
-        }
+        return objMap;
     }
 
-    public GeoObjectsTopology parseTopology(String source){
+    public static Map<Integer, GeoObj> applyTopology(Map<Integer, GeoObj> objects, List<GeoObjectsTopology> topologyList) {
+
+        for (GeoObjectsTopology topology : topologyList){
+            GeoObj parent = objects.get(topology.getParentId());
+            if (parent == null)
+                break;
+            IHaveChildren parentHasChildren = ((IHaveChildren) parent);
+
+            for (int childId : topology.getDaughterIds()){
+                GeoObj child = objects.get(childId);
+                if (child == null)
+                    break;
+                parentHasChildren.addChild(child);
+            }
+        }
+        return objects;
+    }
+
+    public static Map<Integer, GeoObj> applyGeometryByGeoObjects(Map<Integer, GeoObj> objMap, Map<Integer, Geometry> geometryMap){
+        for (Map.Entry<Integer, GeoObj> tuple : objMap.entrySet()){
+            Geometry geometry = geometryMap.get(tuple.getKey());
+            if (geometry == null)
+                break;
+            tuple.getValue().setGeometry(geometry);
+        }
+        return objMap;
+    }
+
+    public static List<GeoObjectsTopology> loadTopology(String path) throws IOException {
+        List<String> strings = Files.readAllLines(Paths.get(path));
+        List<GeoObjectsTopology> topologies = new ArrayList<>();
+        for (String line : strings){
+            GeoObjectsTopology topology = parseTopology(line);
+            if (topology == null)
+                return null;
+            topologies.add(topology);
+        }
+        return topologies;
+    }
+
+
+    public static GeoObjectsTopology parseTopology(String source){
         try {
-            Pattern pattern = Pattern.compile("(\\w)\\s+(\\d)\\s*:\\s*([0-9/]*)");
+            Pattern pattern = Pattern.compile("(\\d)+:\\s+((\\d+,\\s?)*\\d+)");
             Matcher matcher = pattern.matcher(source);
             if (!matcher.matches())
                 return null;
             MatchResult result = matcher.toMatchResult();
             if (result.groupCount() != 3)
                 return null;
-            String type = result.group(1);
-            TopologyType topologyType;
-            if ("h".equals(type))
-                topologyType = TopologyType.HIGHEST_TYPE;
-            else if ("l".equals(type))
-                topologyType = TopologyType.LOWER_TYPE;
-            else return null;
-
-            int parentIndex = Integer.parseInt(result.group(2));
-
+            int parentIndex = Integer.parseInt(result.group(1));
             List<Integer> dIndices = new ArrayList<>();
-
-            Scanner sc = new Scanner(result.group(3));
-            sc.useDelimiter("/");
+            Scanner sc = new Scanner(result.group(2));
+            sc.useDelimiter("(\\s|[,])+");
             while (sc.hasNext())
                 dIndices.add(sc.nextInt());
             if (dIndices.contains(parentIndex))
                 return null;
-            return new GeoObjectsTopology(parentIndex, dIndices, topologyType);
+            return new GeoObjectsTopology(parentIndex, dIndices);
         }
         catch (Exception ignored){
             return null;

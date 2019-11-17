@@ -1,6 +1,6 @@
 package map;
 
-import geometry.Point;
+import geometry.geojson.Point;
 import map.objects.GeoObj;
 
 import java.util.ArrayDeque;
@@ -9,10 +9,8 @@ import java.util.ArrayList;
 public  class MapTile {
     private ArrayList<GeoObj> geoObjArrayList;
 
-    {
-        geoObjArrayList = new ArrayList<>();
-    }
     public MapTile() {
+        geoObjArrayList = new ArrayList<>();
     }
 
     public void addGeoObj(GeoObj geoObj){
@@ -25,7 +23,7 @@ public  class MapTile {
         ArrayList<GeoObj> actualObjects = new ArrayList<>();
         while (!objQueue.isEmpty()) {
             GeoObj current = objQueue.pop();
-            if (!current.unnamed() && current.contains(location, radius)) {
+            if (!current.unnamed() && current.getGeometry().intersects(location, radius)) {
                 actualObjects.add(current);
                 objQueue.addAll(current.getActualChildren());
             }

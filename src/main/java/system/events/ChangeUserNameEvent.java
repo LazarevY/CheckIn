@@ -18,10 +18,4 @@ public class ChangeUserNameEvent implements SystemEvent {
         return name;
     }
 
-    @Override
-    public int getPriority() {
-        return PRIORITY;
-    }
-
-    private static final int  PRIORITY = 2;
 }

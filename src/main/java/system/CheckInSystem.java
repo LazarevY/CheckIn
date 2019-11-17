@@ -1,7 +1,6 @@
 package system;
 
-
-import geometry.Point;
+import geometry.geojson.Point;
 import map.Map;
 import map.objects.GeoObj;
 import map.objects.ObjectType;
@@ -17,11 +16,7 @@ import java.util.*;
 public class CheckInSystem implements Runnable {
 
     public static final int radiusError = 10;
-
-    private HashMap<Long, User> usersBase;
-    private HashMap<Long, GeoObj> relationUserObj;
-    private HashMap<GeoObj, ArrayList<Long>> relationObjUsers;
-
+    private HashMap<Integer, User> usersBase;
     private Map map;
 
     private volatile Connect connect;
@@ -32,8 +27,6 @@ public class CheckInSystem implements Runnable {
 
     public CheckInSystem() {
         usersBase = new HashMap<>();
-        relationUserObj = new HashMap<>();
-        relationObjUsers = new HashMap<>();
         systemPriority.addLast(ObjectType.SC);
         systemPriority.addLast(ObjectType.MARKET);
         systemPriority.addLast(ObjectType.CAFE);
@@ -48,7 +41,6 @@ public class CheckInSystem implements Runnable {
 
     public void setMap(Map map) {
         this.map = map;
-        addObjToBaseOnDeepMode(map.getNullObj());
     }
 
     public void setConnect(Connect connect) {
@@ -61,7 +53,6 @@ public class CheckInSystem implements Runnable {
 
     private void appCycle() {
         while (true) {
-            //System.out.println("New app cycle");
             for (SystemEvent event : connect.getEvents())
                 if (event.getClass() == CheckInEvent.class)
                     manageEvent(((CheckInEvent) event));
@@ -75,12 +66,12 @@ public class CheckInSystem implements Runnable {
         }
     }
 
-    public GeoObj checkIn(long userID) {
+    public GeoObj checkIn(int userID) {
         Point loc = map.getUserLocation(userID);
         User user = usersBase.get(userID);
 
-        GeoObj old = relationUserObj.get(userID);
-        if (old != map.getNullObj() && old.contains(loc, radiusError))
+        GeoObj old = map.getActualForUserGeoObj(userID);
+        if (old != map.getNullObj() && old.getGeometry().intersects(loc, radiusError))
             return old;
 
         PriorityList<ObjectType> priorityList = new PriorityList<>(user.getUserPriority());
@@ -100,13 +91,13 @@ public class CheckInSystem implements Runnable {
                 concurrentParent = concurrentObj;
                 concurrentObj = current;
             } else if (current.checkParent(concurrentParent) && (priority < concurrent_priority
-                    || priority == concurrent_priority && getCountUserInObj(current) > getCountUserInObj(concurrentObj))) {
+                    || priority == concurrent_priority && map.getCountUserInObj(current) > map.getCountUserInObj(concurrentObj))) {
                 concurrent_priority = priority;
                 concurrentObj = current;
             } else {
                 int max_priority = Math.min(concurrent_priority, parent_priority);
                 if (priority < max_priority || parent_priority == max_priority &&
-                        getCountUserInObj(current) > getCountUserInObj(concurrentObj)) {
+                        map.getCountUserInObj(current) > map.getCountUserInObj(concurrentObj)) {
                     concurrent_priority = priority;
                     GeoObj newParent = current.getParent();
                     parent_priority = current.hasParent() ? priorityList.indexOf(newParent.getObjectType()) : priority;
@@ -115,55 +106,37 @@ public class CheckInSystem implements Runnable {
                 }
             }
         }
-        rewriteRelationUserAndObj(userID, concurrentObj);
+        map.rewriteRelationUserAndObj(userID, concurrentObj);
         return concurrentObj;
     }
 
-    private void rewriteRelationUserAndObj(long userID, GeoObj newObj) {
-        GeoObj old = relationUserObj.get(userID);
-        relationObjUsers.get(old).remove(userID);
-        relationUserObj.put(userID, newObj);
-        relationObjUsers.get(newObj).add(userID);
-    }
-
-    private int getCountUserInObj(GeoObj obj) {
-        ArrayList l = relationObjUsers.get(obj);
-        return l == null ? 0 : l.size();
-    }
-
-    public long registerUser(UserData userData) {
-        long id = GeneratorID.generateUserID();
+    public int registerUser(UserData userData) {
+        int id = GeneratorID.generateUserID();
         User nUs = new User(userData, connect, id);
         usersBase.put(id, nUs);
-        relationUserObj.put(id, map.getNullObj());
-        relationObjUsers.get(map.getNullObj()).add(id);
+        map.addUserToMap(nUs);
         return id;
     }
 
-    public User getUser(long id) {
+    public User getUser(int id) {
         return usersBase.get(id);
     }
 
-    public void unregisterUser(Long userID) {
-        GeoObj linked = relationUserObj.get(userID);
-        if (linked != null) {
-            relationObjUsers.get(linked).remove(userID);
-            relationUserObj.remove(userID);
-        }
+    public void unregisterUser(int userID) {
         usersBase.remove(userID);
     }
 
-    public void setUserLocation(long userID, Point location) {
+    public void setUserLocation(int userID, Point location) {
         map.addUserLocation(userID, location);
     }
 
 
-    public void registerAll(List<GeoObj> objs){
+    public void registerAll(List<GeoObj> objs) {
         for (GeoObj object : objs)
             registerGeoObj(object);
     }
 
-    public void addUserPriorityInOrder(long userID, ObjectType... priority) {
+    public void addUserPriorityInOrder(int userID, ObjectType... priority) {
         User u = usersBase.get(userID);
         for (ObjectType t :
                 priority) {
@@ -172,42 +145,13 @@ public class CheckInSystem implements Runnable {
     }
 
 
-    /**
-     *
-     *Регистрация в глубоком режиме - кроме объекта будут зарегистрированы все его дочерние элементы
-     */
-    public void registerGeoObjOnDeepMode(GeoObj obj) {
-        if (obj.unnamed())
-            return;
-        map.addObj(obj);
-        addObjToBaseOnDeepMode(obj);
+    public void registerGeoObj(GeoObj obj) {
+        map.registerObj(obj);
     }
 
-    public void registerGeoObj(GeoObj obj){
-        if (obj.unnamed())
-            return;
-        map.addObj(obj);
-        addObjToBase(obj);
-    }
-
-    private void addObjToBaseOnDeepMode(GeoObj obj) {
-        if (relationObjUsers.containsKey(obj))
-            return;
-        relationObjUsers.put(obj, new ArrayList<>());
-        ArrayList<GeoObj> child = (ArrayList<GeoObj>) obj.getActualChildren();
-        if (child != null)
-            for (GeoObj ch : child)
-                addObjToBaseOnDeepMode(ch);
-    }
-
-    private void addObjToBase(GeoObj obj){
-        if (relationObjUsers.containsKey(obj))
-            return;
-        relationObjUsers.put(obj, new ArrayList<>());
-    }
 
     private void manageEvent(CheckInEvent event) {
-        long id = event.getUserId();
+        int id = event.getUserId();
         User user = usersBase.get(id);
         if (user == null)
             System.out.printf("User with id = %d didn't founded\n", id);

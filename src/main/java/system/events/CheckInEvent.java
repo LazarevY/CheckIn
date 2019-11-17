@@ -1,20 +1,13 @@
 package system.events;
 
 public class CheckInEvent implements SystemEvent {
-    private long userId;
+    private int userId;
 
-    public CheckInEvent(long userId) {
+    public CheckInEvent(int userId) {
         this.userId = userId;
     }
 
-    public long getUserId(){
+    public int getUserId(){
         return userId;
     }
-
-    @Override
-    public int getPriority() {
-        return PRIORITY;
-    }
-
-    private static final int  PRIORITY = 0;
 }

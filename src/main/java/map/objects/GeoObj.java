@@ -1,44 +1,47 @@
 package map.objects;
 
-import geometry.Point;
-import org.codehaus.jackson.annotate.JsonSubTypes;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import geometry.geojson.Geometry;
+import map.Map;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Класс, описывающий основные свойства геообъекта.
  */
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = PointObj.class, name = "point"),
-        @JsonSubTypes.Type(value = CompositeObj.class, name = "composite"),
-        @JsonSubTypes.Type(value = UsualObj.class, name = "usual"),
-        @JsonSubTypes.Type(value = LineObj.class, name = "line"),
-})
+@JsonTypeInfo(property = "type", include = JsonTypeInfo.As.PROPERTY,  use = JsonTypeInfo.Id.NAME)
+@JsonSubTypes({@Type(LineObj.class), @Type(PointObj.class), @Type(CompositeObj.class), @Type(UsualObj.class)})
 public abstract class GeoObj {
+    private int id = Map.nullObjId;
     protected String name;
     private GeoObj parent;
     private ObjectType objectType;
+    private Geometry geometry;
 
     public boolean unnamed() {
         return name == null;
     }
 
-    public GeoObj(GeoObj parent, ObjectType type, long objID) {
-        name = null;
-        this.objectType = type;
-        this.parent = parent;
+    public GeoObj(){
 
     }
 
-    public GeoObj(String name, GeoObj parent, ObjectType type) {
+    public GeoObj(String name, GeoObj parent, Geometry geometry,  ObjectType type) {
         this.name = name;
         this.parent = parent;
+        this.geometry = geometry;
         this.objectType = type;
+    }
+
+    public Geometry getGeometry() {
+        return geometry;
+    }
+
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry;
     }
 
     public void setParent(GeoObj parent) {
@@ -69,13 +72,18 @@ public abstract class GeoObj {
         return parent;
     }
 
-    public abstract boolean contains(Point location, int radius);
-
-    public abstract ArrayList<Point> getBoundsPoints();
-
-    /**
+        /**
      * @return список потомков, которые имеют имя. Если объект не имеет потомков, то вернется ссылка на пустой лист
      */
-    public abstract ArrayList<? extends GeoObj> getActualChildren();
+    @JsonIgnore
+    public abstract List<? extends GeoObj> getActualChildren();
+
+    public boolean hasChildren(){
+        return this instanceof IHaveChildren;
+    }
+
+    public int getId() {
+        return id;
+    }
 }
 

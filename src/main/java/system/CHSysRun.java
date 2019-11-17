@@ -1,9 +1,7 @@
 package system;
 
 import fileinteracting.reading.GeoObjectsLoader;
-import geometry.Circle;
-import geometry.Point;
-import geometry.Rectangle;
+import geometry.geojson.Point;
 import map.Map;
 import map.objects.*;
 import user.Sex;
@@ -15,10 +13,10 @@ import java.util.List;
 public class CHSysRun {
     private Thread checkInThread;
     private CheckInSystem checkInSystem;
-    private long[] users;
+    private int[] users;
 
     public CHSysRun() {
-        users = new long[10];
+        users = new int[10];
         initSystem();
         checkInThread = new Thread(checkInSystem);
     }
@@ -41,38 +39,12 @@ public class CHSysRun {
     private void initSystem(){
         checkInSystem = new CheckInSystem();
 
-//        //---OBJECTS----\\
-//
-//        LineObj wayHonor = new LineObj("Honor way", ObjectType.ALLEY);
-//        wayHonor.addChild(new PointObj("F monument", new Point(10,15), ObjectType.MONUMENT));
-//        wayHonor.addChild(new PointObj("CSF monument", new Point(20,42),ObjectType.MONUMENT));
-//        wayHonor.addChild(new PointObj("24 respects", new Point(5, 55), ObjectType.MONUMENT));
-//        wayHonor.addChild(new PointObj("The end of way", new Point(30,70), ObjectType.MONUMENT));
-//
-//        PointObj mon_1 = new PointObj("Monument_1", new Point(40,81), null, ObjectType.MONUMENT);
-//        PointObj mon_2 = new PointObj("Infinity fire", new Point(109, 95), null, ObjectType.MONUMENT);
-//
-//        CompositeObj park_1 = new CompositeObj("Park_1", new Circle(new Point(120, 67), 20),
-//                null, ObjectType.PARK);
-//        LineObj alley_1 = new LineObj("Summer Alley", ObjectType.ALLEY);
-//        alley_1.addChild(new PointObj("Statue_1", new Point(118, 20),ObjectType.MONUMENT));
-//        alley_1.addChild(new PointObj("Statue_2", new Point(118, 35),ObjectType.MONUMENT));
-//        alley_1.addChild(new PointObj("Statue_3", new Point(118, 53),ObjectType.MONUMENT));
-//
-//        park_1.addChild(alley_1);
-//        park_1.addChild(new UsualObj("Moon", new Rectangle(102, 55, 10,15),
-//                null, ObjectType.CAFE));
-//
-//        UsualObj uni_1 = new UsualObj("VSU", new Rectangle(200, 120, 30, 40), null, ObjectType.UNI);
-//
-//        UsualObj private_1 = new UsualObj("Home_1", new Rectangle(200, 55, 10, 20), null, ObjectType.PRIVATE);
-
         checkInSystem.setConnect(new Connect());
-        checkInSystem.setMap(new Map(100,100, 10, 20));
+        checkInSystem.setMap(new Map(100,100, 10, 20, null));
 
         GeoObjectsLoader loader = new GeoObjectsLoader();
         List<GeoObj> objs = loader.loadGeoObjects("src/main/resources/objects.json");
-        loader.setTopology(objs,"src/main/resources/objectsTopology.tpg");
+        //loader.setTopology(objs,"src/main/resources/objectsTopology.tpg");
         checkInSystem.registerAll(objs);
 
 //        checkInSystem.registerGeoObjOnDeepMode(wayHonor);

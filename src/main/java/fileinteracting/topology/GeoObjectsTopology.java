@@ -3,25 +3,19 @@ package fileinteracting.topology;
 import java.util.List;
 
 public class GeoObjectsTopology {
-    private int parentIndex;
-    private List<Integer> daughterIndices;
-    private TopologyType topologyType;
+    private int parentId;
+    private List<Integer> daughterIds;
 
-    public GeoObjectsTopology(int parentIndex, List<Integer> daughterIndices, TopologyType topologyType) {
-        this.parentIndex = parentIndex;
-        this.daughterIndices = daughterIndices;
-        this.topologyType = topologyType;
+    public GeoObjectsTopology(int parentId, List<Integer> daughterIds) {
+        this.parentId = parentId;
+        this.daughterIds = daughterIds;
     }
 
-    public int getParentIndex() {
-        return parentIndex;
+    public int getParentId() {
+        return parentId;
     }
 
-    public List<Integer> getDaughterIndices() {
-        return daughterIndices;
-    }
-
-    public TopologyType getTopologyType() {
-        return topologyType;
+    public List<Integer> getDaughterIds() {
+        return daughterIds;
     }
 }

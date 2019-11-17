@@ -1,63 +1,37 @@
 package map.objects;
 
-import geometry.Point;
-import geometry.Shape;
-import org.codehaus.jackson.annotate.JsonCreator;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import geometry.geojson.Geometry;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Класс компизитного объекта. Имеет дочерние объекты и произовильные границы<b></b>
  * описываемые классом <code>geometry.Shape</code>
  */
 public class CompositeObj extends GeoObj implements IHaveChildren {
-    private ArrayList<GeoObj> children;
-    private Shape bounds;
+    private ArrayList<GeoObj> childrenObjects;
 
-    public CompositeObj(Shape bounds, ObjectType type){
-        this(null, null, bounds, null, type);
-    }
-    public CompositeObj(String name, Shape bounds, GeoObj parent, ObjectType type) {
-        this(name, null, bounds, parent, type);
+    public CompositeObj(){
+        super();
     }
 
-    @JsonCreator
-    public CompositeObj(@JsonProperty("name")String name, @JsonProperty("bounds")Shape bounds,
-                        @JsonProperty("objectType")ObjectType type) {
-        this(name, null, bounds, null, type);
+    public CompositeObj(String name, GeoObj parent, Geometry geometry, ObjectType type) {
+        super(name, parent, geometry, type);
     }
 
-    public CompositeObj(String name, ArrayList<GeoObj> children, Shape bounds, GeoObj parent, ObjectType type) {
-        super(name, parent, type);
-        this.bounds = bounds;
-        this.children = children;
+    public ArrayList<GeoObj> getChildrenObjects() {
+        return childrenObjects;
     }
 
-    public ArrayList<GeoObj> getChildren() {
-        return children;
-    }
 
-    public Shape getBounds() {
-        return bounds;
-    }
-
+    @JsonIgnore
     @Override
-    public boolean contains(Point location, int radius) {
-        return bounds.contains(location, radius);
-    }
-
-    @Override
-    public ArrayList<Point> getBoundsPoints() {
-        return bounds.getBoundsPoints();
-    }
-
-
-    @Override
-    public ArrayList<GeoObj> getActualChildren() {
+    public List<? extends GeoObj> getActualChildren() {
         ArrayList<GeoObj> result = new ArrayList<>();
         for (GeoObj o :
-                children) {
+                childrenObjects) {
             if (!o.unnamed())
                 result.add(o);
             result.addAll(o.getActualChildren());
@@ -67,9 +41,9 @@ public class CompositeObj extends GeoObj implements IHaveChildren {
 
     @Override
     public void addChild(GeoObj child) {
-        if (children == null)
-            children = new ArrayList<>();
-        children.add(child);
+        if (childrenObjects == null)
+            childrenObjects = new ArrayList<>();
+        childrenObjects.add(child);
         child.setParent(this);
     }
 }

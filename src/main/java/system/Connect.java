@@ -1,12 +1,10 @@
 package system;
 
 import system.events.SystemEvent;
-import util.PriorityList;
 
 
 import java.util.ArrayList;
-import java.util.PriorityQueue;
-import java.util.Vector;
+import java.util.List;
 
 /**
  * Класс, описывающий связь пользователей и системы
@@ -14,19 +12,20 @@ import java.util.Vector;
  * взаимодействовать с системой и отправлять запросы
  */
 public class Connect {
-    private PriorityQueue<SystemEvent> events;
-    private PriorityQueue<SystemEvent> swapBuffer;
+    public static final int USERS_LIMIT =  1000;
+    private List<SystemEvent> events;
+    private List<SystemEvent> swapBuffer;
 
     public Connect(){
-        events = new PriorityQueue<>(((o1, o2) -> Integer.compare(o1.getPriority(), o2.getPriority())));
-        swapBuffer = new PriorityQueue<>(events.comparator());
+        swapBuffer = new ArrayList<>();
+        events = new ArrayList<>();
     }
-    public void addEvent(SystemEvent e){
+    public void sendEvent(SystemEvent e){
             events.add(e);
     }
 
-    public PriorityQueue<SystemEvent> getEvents() {
-        PriorityQueue<SystemEvent> t = swapBuffer;
+    public List<? extends SystemEvent> getEvents() {
+        List<SystemEvent> t = swapBuffer;
         swapBuffer = events;
         events = t;
         events.clear();
