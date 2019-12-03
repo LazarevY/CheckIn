@@ -1,43 +1,53 @@
 package util;
 
-import java.util.Collection;
-import java.util.Vector;
+import map.objects.GeoObj;
+import map.objects.ObjectType;
 
-public class PriorityList<E> extends Vector<E> {
-    public PriorityList(int initialCapacity, int capacityIncrement) {
-        super(initialCapacity, capacityIncrement);
-    }
+import java.util.ArrayList;
+import java.util.List;
 
-    public PriorityList(int initialCapacity) {
-        super(initialCapacity);
-    }
 
+public class PriorityList {
+    private List<ObjectType> priorityList;
     public PriorityList() {
+        priorityList = new ArrayList<>();
     }
 
-    public PriorityList(Collection<? extends E> c) {
-        super(c);
+    public PriorityList(PriorityList other){
+        priorityList = new ArrayList<>(other.priorityList);
     }
 
-    public void addLast(E e){
-        addElement(e);
+    public void addLast(ObjectType e){
+       priorityList.add(e);
     }
 
-    public void addWithPriority(int priority, E e){
+    public int getPriority(GeoObj obj){
+        return obj == null? priorityList.size() : getPriority(obj.getObjectType());
+    }
+
+    public int getPriority(ObjectType type){
+        return type == ObjectType.NONE ? priorityList.size() : priorityList.indexOf(type);
+    }
+
+    public void addWithPriority(int priority, ObjectType e){
         if (priority < 0)
             return;
 
-        if (priority >= elementCount)
-            addElement(e);
+        if (priority >= priorityList.size())
+            priorityList.add(e);
         else
-            add(priority, e);
+            priorityList.add(priority, e);
     }
 
-    public void tailMerdge(PriorityList<E> other){
-        for (E c :
-                other) {
-            if (!contains(c))
+    public void tailMerdge (PriorityList other){
+        for (ObjectType c :
+                other.priorityList) {
+            if (!priorityList.contains(c))
                 addLast(c);
         }
+    }
+
+    public List<ObjectType> getPriorityList() {
+        return priorityList;
     }
 }

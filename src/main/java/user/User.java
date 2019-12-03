@@ -1,5 +1,6 @@
 package user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import geometry.geojson.Point;
 import system.Connect;
 import map.objects.ObjectType;
@@ -8,20 +9,37 @@ import system.events.CheckInEvent;
 import util.PriorityList;
 
 public class User {
-    private UserData data;
-    private Connect sourceConnect;
-    private PriorityList<ObjectType> userPriority;
+    @JsonIgnore
     private int userID;
+    private UserData data;
+    @JsonIgnore
+    private Connect sourceConnect;
+    private PriorityList userPriority;
 
+    public User(){
+        this(null, null, -1);
+    }
     public User(UserData data, Connect sourceConnect, int userID) {
         this.data = data;
         this.sourceConnect = sourceConnect;
         this.userID = userID;
-        userPriority = new PriorityList<>();
+        userPriority = new PriorityList();
     }
 
     public UserData getData() {
         return data;
+    }
+
+    public void setUserID(int userID) {
+        this.userID = userID;
+    }
+
+    public Connect getSourceConnect() {
+        return sourceConnect;
+    }
+
+    public void setSourceConnect(Connect sourceConnect) {
+        this.sourceConnect = sourceConnect;
     }
 
     public void setData(UserData data) {
@@ -37,10 +55,10 @@ public class User {
     };
 
     public boolean havePriority(){
-        return userPriority != null && userPriority.size() != 0;
+        return userPriority != null && userPriority.getPriorityList().size() != 0;
     }
 
-    public PriorityList<ObjectType> getUserPriority() {
+    public PriorityList getUserPriority() {
         return userPriority;
     }
 

@@ -1,8 +1,10 @@
 package map;
 
 import geometry.geojson.Circle;
+import geometry.geojson.Geometry;
 import geometry.geojson.Point;
 import map.objects.GeoObj;
+import map.objects.ObjectType;
 import map.objects.PointObj;
 import user.User;
 
@@ -25,7 +27,7 @@ public class Map {
 
     private java.util.Map<Integer, Point> usersLocation;
 
-    public static final GeoObj nullObj = new PointObj("__NULL__", null, null, null);
+    public static final GeoObj nullObj = new PointObj("__NULL__", null, null, ObjectType.NONE);
     public static final ArrayList<GeoObj> emptyList = new ArrayList<>(0);
     public static final int nullObjId = -1;
 
@@ -85,7 +87,7 @@ public class Map {
 
     public void rewriteRelationUserAndObj(int userID, GeoObj newObj) {
         int oldId = relationUserObj.get(userID).getId();
-        relationObjUsers.get(oldId).remove(userID);
+        relationObjUsers.get(oldId).remove(((Object) userID));
         relationUserObj.put(userID, newObj);
         relationObjUsers.get(newObj.getId()).add(userID);
     }
@@ -111,7 +113,7 @@ public class Map {
         return usersLocation.get(userID);
     }
 
-    public ArrayList<GeoObj> getActualCheckInObjects(Point loc, int radius) {
+    public List<GeoObj> getActualCheckInObjects(Point loc, int radius) {
         ArrayList<GeoObj> objList = new ArrayList<>();
         for (MapTile tile : getActualMapTiles(new Circle(loc, radius).getBoundPoints())) {
             objList.addAll(tile.getActualGeoObjects(loc, radius));

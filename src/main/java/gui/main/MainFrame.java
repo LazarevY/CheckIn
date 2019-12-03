@@ -2,6 +2,7 @@ package gui.main;
 
 import fileinteracting.reading.GeoObjectsLoader;
 import fileinteracting.reading.GeometryLoader;
+import fileinteracting.reading.UserLoader;
 import fileinteracting.topology.GeoObjectsTopology;
 import geometry.geojson.Geometry;
 import geometry.geojson.Point;
@@ -12,22 +13,18 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import map.Map;
 import map.objects.GeoObj;
+import system.AppLogic;
 import system.CheckInSystem;
-import system.Connect;
-import user.Sex;
 import user.User;
-import user.UserData;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 public class MainFrame extends Application {
 
     private static MainFrame currentFrame;
-    private Map map;
-    private CheckInSystem system;
-    private Connect connect;
-    private User user;
+    private AppLogic appLogic;
 
     public static MainFrame getCurrentFrame() {
         return currentFrame;
@@ -35,15 +32,11 @@ public class MainFrame extends Application {
 
     public MainFrame() {
         currentFrame = this;
-        initMap();
-        system = new CheckInSystem();
-        connect = new Connect();
-        system.setMap(map);
-        system.setConnect(connect);
-        user = system.getUser(system.registerUser(new UserData("ASASAZ LALKA", 20, Sex.MALE)));
-        system.setUserLocation(user.getUserID(), new Point(11,11));
+        loadResources();
     }
 
+
+    @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("../main.fxml"));
         primaryStage.setTitle("Hello World");
@@ -55,7 +48,7 @@ public class MainFrame extends Application {
         launch(args);
     }
 
-    private void initMap() {
+    private Map initMap() {
         java.util.Map<Integer, Geometry> geometryMap = null;
         try {
             geometryMap = GeometryLoader.loadGeometryFromFeatureCollection("src/main/resources/objects/map/geom.geojson");
@@ -73,22 +66,37 @@ public class MainFrame extends Application {
         GeoObjectsLoader.applyGeometryByGeoObjects(objMap, geometryMap);
         GeoObjectsLoader.applyTopology(objMap, topologies);
 
-        map = new map.Map(520, 520, 20, 20, objMap);
+        return new map.Map(520, 520, 10, 10, objMap);
     }
 
-    public void checkIn(){
-        System.out.println(system.checkIn(user.getUserID()).fullName());
+    private void loadResources(){
+        CheckInSystem system = new CheckInSystem();
+        Map map = initMap();
+        List<User> users = UserLoader.loadUsersData("src/main/resources/users/users.json");
+        this.appLogic = new AppLogic(system, map, users);
+        Random r = new Random();
+
+        for (User u: users){
+            system.registerUser(u);
+            system.setUserLocation(u, new Point(r.nextInt() % 500, r.nextInt() % 500));
+        }
+
+    }
+
+    public String checkIn(){
+        return appLogic.getCheckInSystem().checkIn(appLogic.getCurrentUser().getUserID()).fullName();
+    }
+
+    public AppLogic getAppLogic() {
+        return appLogic;
     }
 
     public Map getMap() {
-        return map;
+        return appLogic.getMap();
     }
 
     public CheckInSystem getSystem() {
-        return system;
+        return appLogic.getCheckInSystem();
     }
 
-    public User getUser() {
-        return user;
-    }
 }

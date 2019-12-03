@@ -1,12 +1,13 @@
 package user;
 
-import geometry.Point;
-
-
 public class UserData {
     private String name;
     private int age;
     private Sex sex;
+
+    public UserData(){
+
+    }
 
     public UserData(String name, int age, Sex sex) {
         this.name = name;

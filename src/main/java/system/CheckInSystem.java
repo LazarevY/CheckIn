@@ -21,7 +21,7 @@ public class CheckInSystem implements Runnable {
 
     private volatile Connect connect;
 
-    private final static PriorityList<ObjectType> systemPriority = new PriorityList<>();
+    private final static PriorityList systemPriority = new PriorityList();
 
     private boolean launched = false;
 
@@ -47,7 +47,7 @@ public class CheckInSystem implements Runnable {
         this.connect = connect;
     }
 
-    public static PriorityList<ObjectType> getSystemPriority() {
+    public static PriorityList getSystemPriority() {
         return systemPriority;
     }
 
@@ -70,21 +70,24 @@ public class CheckInSystem implements Runnable {
         Point loc = map.getUserLocation(userID);
         User user = usersBase.get(userID);
 
-        GeoObj old = map.getActualForUserGeoObj(userID);
-        if (old != map.getNullObj() && old.getGeometry().intersects(loc, radiusError))
-            return old;
-
-        PriorityList<ObjectType> priorityList = new PriorityList<>(user.getUserPriority());
-        priorityList.tailMerdge(systemPriority);
-
         GeoObj concurrentObj = map.getNullObj();
         GeoObj concurrentParent = map.getNullObj();
-        int concurrent_priority = priorityList.size();
-        int parent_priority = concurrent_priority;
 
-        ArrayList<GeoObj> objs = map.getActualCheckInObjects(loc, radiusError);
+        GeoObj old = map.getActualForUserGeoObj(userID);
+        if (old != map.getNullObj() && old.getGeometry().intersects(loc, radiusError)) {
+            concurrentObj = old;
+            concurrentParent = old.getParent();
+        }
+
+        PriorityList priorityList = new PriorityList(user.getUserPriority());
+        priorityList.tailMerdge(systemPriority);
+
+        int concurrent_priority = priorityList.getPriority(concurrentObj);
+        int parent_priority = priorityList.getPriority(concurrentParent);
+
+        List<GeoObj> objs = map.getActualCheckInObjects(loc, radiusError);
         for (GeoObj current : objs) {
-            int priority = priorityList.indexOf(current.getObjectType());
+            int priority = priorityList.getPriority(current);
             if (current.checkParent(concurrentObj)) {
                 parent_priority = concurrent_priority;
                 concurrent_priority = priority;
@@ -100,7 +103,7 @@ public class CheckInSystem implements Runnable {
                         map.getCountUserInObj(current) > map.getCountUserInObj(concurrentObj)) {
                     concurrent_priority = priority;
                     GeoObj newParent = current.getParent();
-                    parent_priority = current.hasParent() ? priorityList.indexOf(newParent.getObjectType()) : priority;
+                    parent_priority = current.hasParent() ? priorityList.getPriority(newParent) : priority;
                     concurrentObj = current;
                     concurrentParent = newParent;
                 }
@@ -118,6 +121,15 @@ public class CheckInSystem implements Runnable {
         return id;
     }
 
+    public int registerUser(User user){
+        int id = GeneratorID.generateUserID();
+        user.setUserID(id);
+        user.setSourceConnect(connect);
+        usersBase.put(id, user);
+        map.addUserToMap(user);
+        return id;
+    }
+
     public User getUser(int id) {
         return usersBase.get(id);
     }
@@ -128,6 +140,10 @@ public class CheckInSystem implements Runnable {
 
     public void setUserLocation(int userID, Point location) {
         map.addUserLocation(userID, location);
+    }
+
+    public void setUserLocation(User user, Point location) {
+        map.addUserLocation(user.getUserID(), location);
     }
 
 

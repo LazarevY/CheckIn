@@ -38,28 +38,7 @@ public class LineString extends Geometry{
 
     @Override
     public List<Point> getBoundPoints() {
-        Point maxX = new Point(points.get(0));
-        Point minX = maxX;
-        Point maxY = maxX;
-        Point minY = maxX;
-
-        for (Point p : points) {
-            if(p.getX() < minX.getX())
-                minX = p;
-            else if (p.getX() > maxX.getX())
-                maxX = p;
-            if(p.getY() < minY.getY())
-                minY = p;
-            else if (p.getY() > maxY.getX())
-                maxX = p;
-        }
-
-        HashSet<Point> points = new HashSet<>();
-        points.add(maxX);
-        points.add(maxY);
-        points.add(minX);
-        points.add(minY);
-        return new ArrayList<>(points);
+        return points;
     }
 
     @Override

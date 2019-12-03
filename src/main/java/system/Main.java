@@ -8,9 +8,14 @@ import geometry.geojson.Geometry;
 import gui.main.MainFrame;
 import map.objects.GeoObj;
 import map.objects.LineObj;
+import map.objects.ObjectType;
+import user.Sex;
+import user.User;
+import user.UserData;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -23,15 +28,23 @@ public class Main {
 
        // List<Geometry> list = GeometryLoader.loadGeometryFromFeatureCollection("src/main/resources/objects/objs.geojson");
        // System.out.println();
+        ObjectMapper mapper = new ObjectMapper();
+        User u = new User(new UserData("ASASAZ LALKA", 20, Sex.MALE), null, 1);
+        u.addPriority(0, ObjectType.UNI);
+        u.addPriority(1, ObjectType.CAFE);
+        u.addPriority(2, ObjectType.PARK);
 
-        Map<Integer, Geometry> geometryMap = GeometryLoader.loadGeometryFromFeatureCollection("src/main/resources/objects/geom.geojson");
-        List<GeoObjectsTopology> topologies = GeoObjectsLoader.loadTopology("src/main/resources/objectsTopology.tpg");
-        Map<Integer, GeoObj> objMap = GeoObjectsLoader.loadGeoObjectsInMap("src/main/resources/objects/objectsList.json");
+        User u1 = new User(new UserData("Vasily", 20, Sex.MALE), null, 1);
+        u1.addPriority(0, ObjectType.PRIVATE);
+        u1.addPriority(1, ObjectType.ALLEY);
+        u1.addPriority(2, ObjectType.MONUMENT);
 
-        GeoObjectsLoader.applyGeometryByGeoObjects(objMap, geometryMap);
-        GeoObjectsLoader.applyTopology(objMap, topologies);
+        User u2 = new User(new UserData("Alex", 18, Sex.FEMALE), null, 1);
+        u2.addPriority(0, ObjectType.MONUMENT);
+        u2.addPriority(1, ObjectType.SCHOOL);
+        u2.addPriority(2, ObjectType.PARK);
 
-        map.Map map = new map.Map(200,200, 20,20, objMap);
-        System.out.println();
+        List<User> users = Arrays.asList(u,u1,u2);
+        mapper.writeValue(new File("src/main/resources/users/users.json"), users);
     }
 }

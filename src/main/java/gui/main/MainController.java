@@ -15,11 +15,13 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import map.objects.GeoObj;
+import system.AppLogic;
 import system.CheckInSystem;
 import user.User;
 
 public class MainController {
     private MainFrame frame;
+    private AppLogic logic;
 
     public Canvas mapCanvas;
     @FXML
@@ -27,6 +29,9 @@ public class MainController {
 
     @FXML
     private URL location;
+
+    @FXML
+    public Label objectLabel;
 
     @FXML
     private Label userNameLabel;
@@ -37,11 +42,9 @@ public class MainController {
     @FXML
     void initialize() {
         frame = MainFrame.getCurrentFrame();
-        User u = frame.getUser();
+        logic = frame.getAppLogic();
+        setUserData(logic.getCurrentUser());
         repaint();
-        userNameLabel.setText(u.getData().getName());
-        userAgeLabel.setText(String.valueOf(u.getData().getAge()));
-        frame.checkIn();
     }
 
     private void repaint() {
@@ -66,7 +69,7 @@ public class MainController {
 
     private void drawUser() {
 
-        Circle c = new Circle(frame.getMap().getUserLocation(frame.getUser().getUserID()), CheckInSystem.radiusError);
+        Circle c = new Circle(frame.getMap().getUserLocation(logic.getCurrentUser().getUserID()), CheckInSystem.radiusError);
         GraphicsContext gc = mapCanvas.getGraphicsContext2D();
         gc.setGlobalAlpha(0.5);
         gc.setFill(Color.RED);
@@ -78,14 +81,30 @@ public class MainController {
         Platform.exit();
     }
 
-    public void checkInAction(ActionEvent actionEvent) {
-        frame.checkIn();
+    public void checkInAction() {
+        objectLabel.setText(frame.checkIn());
     }
 
     public void mapMouseClickAction(MouseEvent mouseEvent) {
-        int id = frame.getUser().getUserID();
+        int id = logic.getCurrentUser().getUserID();
         frame.getSystem().setUserLocation(id, new Point(mouseEvent.getX(), mouseEvent.getY()));
         System.out.println(mouseEvent.getX() + " " + mouseEvent.getY());
         repaint();
+    }
+
+    private void setUserData(User user){
+        userNameLabel.setText(user.getData().getName());
+        userAgeLabel.setText(String.valueOf(user.getData().getAge()));
+        repaint();
+    }
+
+    public void setPreviousUser() {
+        setUserData(logic.previousUser());
+       // checkInAction();
+    }
+
+    public void setNextUser() {
+        setUserData(logic.nextUser());
+        //checkInAction();
     }
 }

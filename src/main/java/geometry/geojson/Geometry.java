@@ -25,7 +25,7 @@ public abstract class Geometry implements IJavaFXDrawable {
         b *= factor;
         c *= factor;
 
-        double distance = Math.abs( a * center.getY() + b * center.getX() + c);
+        double distance = Math.abs(a * center.getY() + b * center.getX() + c);
 
         if (distance > circle.getRadius())
             return false;
@@ -39,5 +39,4 @@ public abstract class Geometry implements IJavaFXDrawable {
     public static boolean lineCircleIntersects(Point line1, Point line2, Point circleCenter, double circleRadius){
         return lineCircleIntersects(line1, line2, new Circle(circleCenter, circleRadius));
     }
-
 }
