@@ -4,5 +4,6 @@ public enum ObjectType {
     SC, PRIVATE, UNI, SCHOOL, MARKET, MONUMENT,
     ALLEY, PARK,
     CAFE,
-    NONE
+    NONE,
+    STADIUM
 }

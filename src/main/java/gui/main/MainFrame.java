@@ -16,8 +16,12 @@ import map.objects.GeoObj;
 import system.AppLogic;
 import system.CheckInSystem;
 import user.User;
+import user.UserInterface;
+import user.UserManagement;
+import util.Randomizer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -25,6 +29,7 @@ public class MainFrame extends Application {
 
     private static MainFrame currentFrame;
     private AppLogic appLogic;
+    private Randomizer randomizer = new Randomizer();
 
     public static MainFrame getCurrentFrame() {
         return currentFrame;
@@ -66,19 +71,22 @@ public class MainFrame extends Application {
         GeoObjectsLoader.applyGeometryByGeoObjects(objMap, geometryMap);
         GeoObjectsLoader.applyTopology(objMap, topologies);
 
-        return new map.Map(520, 520, 10, 10, objMap);
+        return new map.Map(500, 500, 10, 10, objMap);
     }
 
     private void loadResources(){
         CheckInSystem system = new CheckInSystem();
         Map map = initMap();
         List<User> users = UserLoader.loadUsersData("src/main/resources/users/users.json");
-        this.appLogic = new AppLogic(system, map, users);
-        Random r = new Random();
-
-        for (User u: users){
+        List<UserManagement> userManagements = new ArrayList<>();
+        this.appLogic = new AppLogic(system, map, users, userManagements);
+             for (User u: users){
             system.registerUser(u);
-            system.setUserLocation(u, new Point(r.nextInt() % 500, r.nextInt() % 500));
+            float stepFactor = randomizer.getFloatFromTo(60, 90);
+            float directionFactor = randomizer.getFloatFromTo(1, 5);
+            float checkInFactor = randomizer.getFloatFromTo(1, 10);
+            userManagements.add(new UserManagement(new UserInterface(u, new Randomizer(),
+                    stepFactor, directionFactor, checkInFactor, map.getActionArea())));
         }
 
     }

@@ -19,6 +19,8 @@ import system.AppLogic;
 import system.CheckInSystem;
 import user.User;
 
+import javax.swing.Timer;
+
 public class MainController {
     private MainFrame frame;
     private AppLogic logic;
@@ -45,6 +47,9 @@ public class MainController {
         logic = frame.getAppLogic();
         setUserData(logic.getCurrentUser());
         repaint();
+        logic.startUsersManagements();
+        Timer timer = new Timer(100, e->repaint());
+        timer.start();
     }
 
     private void repaint() {
@@ -54,7 +59,7 @@ public class MainController {
         mapCanvas.getGraphicsContext2D().clearRect(0, 0, mapCanvas.getWidth(), mapCanvas.getHeight());
         gc.fillRect(0, 0, mapCanvas.getWidth(), mapCanvas.getHeight());
         drawMap();
-        drawUser();
+        drawUsers();
     }
 
     private void drawMap() {
@@ -67,13 +72,22 @@ public class MainController {
         }
     }
 
-    private void drawUser() {
+    private void drawUsers(){
+        for (User u : logic.getUsersList())
+            drawUser(u);
+    }
 
-        Circle c = new Circle(frame.getMap().getUserLocation(logic.getCurrentUser().getUserID()), CheckInSystem.radiusError);
+    private void drawUser(User user) {
+
+        Circle c = new Circle(frame.getMap().getUserLocation(user.getUserID()), CheckInSystem.radiusError);
         GraphicsContext gc = mapCanvas.getGraphicsContext2D();
         gc.setGlobalAlpha(0.5);
         gc.setFill(Color.RED);
         c.draw(gc);
+        gc.setGlobalAlpha(1);
+        gc.setFill(Color.DARKSLATEGRAY);
+        Point center = c.getCenter();
+        gc.fillOval(center.getX() - 1, center.getY() - 1, 2,2);
 
     }
 
@@ -82,7 +96,8 @@ public class MainController {
     }
 
     public void checkInAction() {
-        objectLabel.setText(frame.checkIn());
+        //objectLabel.setText(frame.checkIn());
+        logic.getCurrentUser().checkIn();
     }
 
     public void mapMouseClickAction(MouseEvent mouseEvent) {

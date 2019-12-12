@@ -3,6 +3,7 @@ package geometry.geojson;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import util.Vector2D;
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +51,10 @@ public class Point extends Geometry {
 
     public static Point subVector(Point start, Point end){
         return new Point(end.x - start.x, end.y - start.y);
+    }
+
+    public static Point sum(Point p, Vector2D v){
+        return new Point(p.x +v.x(), p.y + v.y());
     }
 
     @Override

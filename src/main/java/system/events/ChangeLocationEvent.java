@@ -1,6 +1,7 @@
 package system.events;
 
 import geometry.geojson.Point;
+import system.CheckInSystem;
 
 public class ChangeLocationEvent implements SystemEvent {
     private int userId;
@@ -19,4 +20,8 @@ public class ChangeLocationEvent implements SystemEvent {
         return location;
     }
 
+    @Override
+    public void process(CheckInSystem system) {
+        system.setUserLocation(userId, location);
+    }
 }

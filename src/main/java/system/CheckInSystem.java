@@ -13,7 +13,7 @@ import util.PriorityList;
 
 import java.util.*;
 
-public class CheckInSystem implements Runnable {
+public class CheckInSystem {
 
     public static final int radiusError = 10;
     private HashMap<Integer, User> usersBase;
@@ -33,10 +33,12 @@ public class CheckInSystem implements Runnable {
         systemPriority.addLast(ObjectType.PARK);
         systemPriority.addLast(ObjectType.ALLEY);
         systemPriority.addLast(ObjectType.UNI);
+        systemPriority.addLast(ObjectType.STADIUM);
         systemPriority.addLast(ObjectType.SCHOOL);
         systemPriority.addLast(ObjectType.PRIVATE);
         systemPriority.addLast(ObjectType.MONUMENT);
         systemPriority.addLast(ObjectType.ALLEY);
+        connect = new Connect(this);
     }
 
     public void setMap(Map map) {
@@ -47,23 +49,12 @@ public class CheckInSystem implements Runnable {
         this.connect = connect;
     }
 
-    public static PriorityList getSystemPriority() {
-        return systemPriority;
+    public Connect getConnect() {
+        return connect;
     }
 
-    private void appCycle() {
-        while (true) {
-            for (SystemEvent event : connect.getEvents())
-                if (event.getClass() == CheckInEvent.class)
-                    manageEvent(((CheckInEvent) event));
-                else if (event.getClass() == ChangeLocationEvent.class)
-                    manageEvent(((ChangeLocationEvent) event));
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public static PriorityList getSystemPriority() {
+        return systemPriority;
     }
 
     public GeoObj checkIn(int userID) {
@@ -110,7 +101,9 @@ public class CheckInSystem implements Runnable {
             }
         }
         map.rewriteRelationUserAndObj(userID, concurrentObj);
+        System.out.println("UserID - " + userID + ", place - " + (concurrentObj == Map.nullObj? "not founded" : concurrentObj.fullName()));
         return concurrentObj;
+
     }
 
     public int registerUser(UserData userData) {
@@ -147,6 +140,15 @@ public class CheckInSystem implements Runnable {
     }
 
 
+    public void processEvents(List<SystemEvent> events){
+        for (SystemEvent event : events)
+            event.process(this);
+    }
+
+    public void processEvent(SystemEvent event){
+        event.process(this);
+    }
+
     public void registerAll(List<GeoObj> objs) {
         for (GeoObj object : objs)
             registerGeoObj(object);
@@ -160,35 +162,7 @@ public class CheckInSystem implements Runnable {
         }
     }
 
-
     public void registerGeoObj(GeoObj obj) {
         map.registerObj(obj);
-    }
-
-
-    private void manageEvent(CheckInEvent event) {
-        int id = event.getUserId();
-        User user = usersBase.get(id);
-        if (user == null)
-            System.out.printf("User with id = %d didn't founded\n", id);
-        else {
-            System.out.printf("User %s has been checkined in %s\n", user.getData().getName(),
-                    checkIn(id).fullName());
-        }
-    }
-
-    private void manageEvent(ChangeLocationEvent event) {
-        map.addUserLocation(event.getUserId(), event.getLocation());
-    }
-
-    public void startSystem() {
-        launched = true;
-    }
-
-    @Override
-    public void run() {
-        while (launched) {
-            appCycle();
-        }
     }
 }

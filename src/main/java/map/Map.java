@@ -1,5 +1,6 @@
 package map;
 
+import geometry.Rectangle;
 import geometry.geojson.Circle;
 import geometry.geojson.Geometry;
 import geometry.geojson.Point;
@@ -31,9 +32,12 @@ public class Map {
     public static final ArrayList<GeoObj> emptyList = new ArrayList<>(0);
     public static final int nullObjId = -1;
 
+    private Rectangle actionArea;
+
     public Map(int width, int height, int countXTiles, int countYTiles, java.util.Map<Integer, GeoObj> objMap) {
         this.width = width;
         this.height = height;
+        actionArea = new Rectangle(new Point(0,0), new Point(width, height));
         usersLocation = new HashMap<>();
 
         relationObjUsers = new HashMap<>();
@@ -123,14 +127,33 @@ public class Map {
 
     private ArrayList<MapTile> getActualMapTiles(List<Point> points) {
         ArrayList<MapTile> mapTiles = new ArrayList<>();
-        double tileWidth = width / tiles.length;
-        double tileHeight = height / tiles[0].length;
+        double tileWidth = width / tiles[0].length;
+        double tileHeight = height / tiles.length;
         for (Point p : points) {
-            MapTile tile = tiles[(int) (p.getY() / tileHeight)][(int) (p.getX() / tileWidth)];
-            if (!mapTiles.contains(tile))
-                mapTiles.add(tile);
+            try {
+                MapTile tile = tiles[getIndexTile(p.getX(), tileWidth, tiles[0].length - 1)]
+                        [getIndexTile(p.getY(), tileHeight, tiles.length - 1)];
+
+                if (!mapTiles.contains(tile))
+                    mapTiles.add(tile);
+            }
+            catch (ArrayIndexOutOfBoundsException e){
+                System.out.println();
+            }
         }
         return mapTiles;
+    }
+
+    public Rectangle getActionArea(){
+        return actionArea;
+    }
+
+    private int getIndexTile(double extent, double tileExtent, int maxIndex){
+        double f1 = extent / tileExtent;
+        int indexTile = ((int) f1);
+        if (f1 - indexTile < 1e-8)
+            indexTile =  Math.max(0, indexTile - 1);
+        return Math.min(indexTile, maxIndex);
     }
 
 }

@@ -13,22 +13,13 @@ import java.util.List;
  */
 public class Connect {
     public static final int USERS_LIMIT =  1000;
-    private List<SystemEvent> events;
-    private List<SystemEvent> swapBuffer;
+    private CheckInSystem system;
 
-    public Connect(){
-        swapBuffer = new ArrayList<>();
-        events = new ArrayList<>();
+    public Connect(CheckInSystem system){
+        this.system = system;
     }
-    public void sendEvent(SystemEvent e){
-            events.add(e);
+    public synchronized void sendEvent(SystemEvent e){
+        system.processEvent(e);
     }
 
-    public List<? extends SystemEvent> getEvents() {
-        List<SystemEvent> t = swapBuffer;
-        swapBuffer = events;
-        events = t;
-        events.clear();
-        return swapBuffer;
-    }
 }
